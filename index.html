@@ -1,1 +1,100 @@
 
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a1a;--text:#ffffff;--sub:#a0a0c0;--muted:#6060a0;--border:#ffffff10;--prog:linear-gradient(90deg,#6c63ff,#00d4aa)}
+.light{--bg:#f0f2ff;--text:#1a1a2e;--sub:#4a4a7a;--muted:#8888aa;--border:#00000015;--prog:linear-gradient(90deg,#6c63ff,#00d4aa)}
+body{min-height:100vh;background:var(--bg);display:flex;flex-direction:column;transition:background .4s}
+.controls{position:fixed;top:16px;right:16px;display:flex;gap:10px;z-index:99}
+.ctrl-btn{padding:8px 16px;border:none;border-radius:20px;font-size:13px;font-weight:500;cursor:pointer;background:#6c63ff;color:#fff;letter-spacing:.05em;transition:opacity .2s}
+.ctrl-btn:hover{opacity:.85}
+.wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem 1rem;position:relative;overflow:hidden;min-height:100vh}
+.bg-orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:.3;animation:float 6s ease-in-out infinite;pointer-events:none}
+.orb1{width:45vw;height:45vw;background:#6c63ff;top:-10%;left:-10%;animation-delay:0s}
+.orb2{width:35vw;height:35vw;background:#00d4aa;bottom:-5%;right:-5%;animation-delay:2s}
+.orb3{width:25vw;height:25vw;background:#ff6b9d;top:45%;left:48%;animation-delay:4s}
+@keyframes float{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-24px) scale(1.06)}}
+.company{font-size:clamp(14px,3vw,22px);letter-spacing:.25em;text-transform:uppercase;font-weight:600;background:linear-gradient(90deg,#6c63ff,#00d4aa,#ff6b9d,#6c63ff);background-size:300% 100%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 3s linear infinite;margin-bottom:2rem}
+@keyframes shimmer{0%{background-position:0% 50%}100%{background-position:300% 50%}}
+.day-date{display:flex;gap:1.5rem;align-items:center;margin-bottom:1.5rem}
+.day,.date{font-size:clamp(15px,2.5vw,20px);color:var(--sub);letter-spacing:.08em;transition:color .4s}
+.dot-sep{width:6px;height:6px;border-radius:50%;background:#6c63ff;opacity:.8}
+.clock-row{display:flex;align-items:center;gap:.15em;margin-bottom:1.5rem}
+.digit-block{display:flex;flex-direction:column;align-items:center}
+.digit{font-family:monospace;font-size:clamp(80px,22vw,200px);font-weight:800;line-height:1;transition:color .4s}
+.hh{color:#a78bfa}.mm{color:#34d399}.ss{color:#f472b6}
+.colon{font-family:monospace;font-size:clamp(60px,16vw,150px);font-weight:200;color:var(--muted);margin:0 4px;animation:blink 1s step-start infinite;line-height:1;padding-bottom:6px;transition:color .4s}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.1}}
+.label{font-size:clamp(11px,1.8vw,16px);letter-spacing:.18em;text-transform:uppercase;margin-top:4px;transition:color .4s}
+.lh{color:#a78bfa99}.lm{color:#34d39999}.ls{color:#f472b699}
+.progress-bar{width:min(500px,80vw);height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:1rem;transition:background .4s}
+.progress-fill{height:100%;border-radius:2px;background:var(--prog);transition:width .95s linear}
+</style>
+
+<div class="controls">
+  <button class="ctrl-btn" id="langBtn" onclick="toggleLang()">EN</button>
+  <button class="ctrl-btn" id="themeBtn" onclick="toggleTheme()">☀️</button>
+</div>
+
+<div class="wrap" id="wrap">
+  <div class="orb1 bg-orb"></div>
+  <div class="orb2 bg-orb"></div>
+  <div class="orb3 bg-orb"></div>
+  <div class="company">Ali Elsisi</div>
+  <div class="day-date">
+    <span class="day" id="day">—</span>
+    <div class="dot-sep"></div>
+    <span class="date" id="date">—</span>
+  </div>
+  <div class="clock-row">
+    <div class="digit-block">
+      <span class="digit hh" id="hh">00</span>
+      <span class="label lh" id="lbl-h">ساعة</span>
+    </div>
+    <span class="colon">:</span>
+    <div class="digit-block">
+      <span class="digit mm" id="mm">00</span>
+      <span class="label lm" id="lbl-m">دقيقة</span>
+    </div>
+    <span class="colon">:</span>
+    <div class="digit-block">
+      <span class="digit ss" id="ss">00</span>
+      <span class="label ls" id="lbl-s">ثانية</span>
+    </div>
+  </div>
+  <div class="progress-bar">
+    <div class="progress-fill" id="prog" style="width:0%"></div>
+  </div>
+</div>
+
+<script>
+const ar={days:['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'],months:['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'],h:'ساعة',m:'دقيقة',s:'ثانية'};
+const en={days:['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],months:['January','February','March','April','May','June','July','August','September','October','November','December'],h:'Hour',m:'Min',s:'Sec'};
+let lang='ar', dark=true;
+function pad(v){return String(v).padStart(2,'0')}
+function tick(){
+  const n=new Date(), L=lang==='ar'?ar:en;
+  document.getElementById('hh').textContent=pad(n.getHours());
+  document.getElementById('mm').textContent=pad(n.getMinutes());
+  document.getElementById('ss').textContent=pad(n.getSeconds());
+  document.getElementById('date').textContent=`${n.getDate()} ${L.months[n.getMonth()]} ${n.getFullYear()}`;
+  document.getElementById('day').textContent=L.days[n.getDay()];
+  document.getElementById('lbl-h').textContent=L.h;
+  document.getElementById('lbl-m').textContent=L.m;
+  document.getElementById('lbl-s').textContent=L.s;
+  document.getElementById('prog').style.width=(n.getSeconds()/59*100)+'%';
+}
+function toggleLang(){
+  lang=lang==='ar'?'en':'ar';
+  document.getElementById('langBtn').textContent=lang==='ar'?'EN':'عر';
+  document.documentElement.setAttribute('dir',lang==='ar'?'rtl':'ltr');
+  tick();
+}
+function toggleTheme(){
+  dark=!dark;
+  document.getElementById('wrap').classList.toggle('light',!dark);
+  document.getElementById('themeBtn').textContent=dark?'☀️':'🌙';
+}
+tick();
+setInterval(tick,1000);
+</script>
